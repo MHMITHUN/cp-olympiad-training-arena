@@ -4,8 +4,13 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { clearSessionCookie, createSessionToken, setSessionCookie } from "@/lib/auth/session";
+import { rateLimit } from "@/lib/rate-limit";
 import { getStore } from "@/lib/db";
 import { loginSchema, registerSchema } from "@/lib/validation/auth";
+
+/** Login attempts allowed per email per window (brute-force brake). */
+const LOGIN_RATE_MAX = 10;
+const LOGIN_RATE_WINDOW_MS = 10 * 60 * 1000;
 
 export interface AuthFormState {
   error?: string;
@@ -58,6 +63,20 @@ export async function loginAction(
   }
 
   const { email, password } = parsed.data;
+
+  // Brute-force brake: at most LOGIN_RATE_MAX well-formed attempts per
+  // email per window (in-memory, per server instance). The message is
+  // generic on purpose — it never confirms whether the account exists.
+  const limit = rateLimit(
+    `login:${email.toLowerCase()}`,
+    LOGIN_RATE_MAX,
+    LOGIN_RATE_WINDOW_MS,
+  );
+  if (!limit.ok) {
+    const minutes = Math.max(1, Math.ceil(limit.retryAfterSec / 60));
+    return { error: `Too many attempts - try again in ${minutes} minute${minutes === 1 ? "" : "s"}.` };
+  }
+
   const store = await getStore();
   const user = await store.findByEmail(email);
   if (!user || !verifyPassword(password, user.passwordHash)) {

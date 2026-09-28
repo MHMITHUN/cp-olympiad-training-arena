@@ -290,6 +290,11 @@ masquerade as real activity.
 - **Demo mode resets on restart** (in-memory store) and is single-process —
   two app instances would have separate demo clubs. Use MongoDB for
   anything shared.
+- **Rate limiting is in-memory and per-instance.** Login (10 attempts per
+  email per 10 minutes) and "Run on sample" (12 runs per user per minute)
+  are rate-limited, but the counters live in the server process: on
+  serverless or multi-instance deployments each instance counts separately
+  (effective limit is per instance), and all counters reset on restart.
 - **C/C++ only** (the club's language); submissions are size-capped at
   100 KB; contest scoring uses the problem examples as tests (Judge0 runs
   each example with expected output attached).

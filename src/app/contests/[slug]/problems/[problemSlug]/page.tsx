@@ -195,7 +195,12 @@ export default async function ContestProblemPage({ params }: PageProps) {
             <h2 className="font-mono text-xs font-semibold uppercase tracking-wide text-accent">
               Hints
             </h2>
-            <HintsPanel hints={problem.hints} />
+            {/* Only the count ships to the client; hint text is fetched
+                on demand via the revealHint server action (spec 19.4). */}
+            <HintsPanel
+              problemSlug={problem.slug}
+              hintCount={problem.hints.length}
+            />
           </section>
 
           <section aria-label="Editorial" className="flex flex-col gap-2">
@@ -203,7 +208,10 @@ export default async function ContestProblemPage({ params }: PageProps) {
               Editorial
             </h2>
             {ended ? (
-              <EditorialReveal editorialMd={problem.editorialMd} />
+              <EditorialReveal
+                problemSlug={problem.slug}
+                hasEditorial={problem.editorialMd.trim().length > 0}
+              />
             ) : (
               <p className="rounded-lg border border-dashed border-border bg-surface p-4 text-xs text-muted">
                 The editorial unlocks when the contest ends — solving it

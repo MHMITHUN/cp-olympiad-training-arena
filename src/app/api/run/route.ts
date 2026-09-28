@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { apiGuard } from "@/lib/auth/guards";
+import { rateLimit } from "@/lib/rate-limit";
 import { getStore } from "@/lib/db";
 import { isProblemVisible } from "@/lib/problems/visibility";
 import { runOnSample } from "@/lib/judge/run";
 import { runSampleSchema } from "@/lib/validation/run";
+
+/** Sample runs allowed per user per minute (Judge0 quota brake). */
+const RUN_RATE_MAX = 12;
+const RUN_RATE_WINDOW_MS = 60 * 1000;
 
 /**
  * POST /api/run — "Run on sample" (login required).
@@ -15,6 +20,20 @@ import { runSampleSchema } from "@/lib/validation/run";
 export async function POST(req: NextRequest) {
   const guard = await apiGuard(req);
   if ("response" in guard) return guard.response;
+
+  // Judge0 quota brake: at most RUN_RATE_MAX runs per user per minute
+  // (in-memory, per server instance).
+  const limit = rateLimit(
+    `run:${guard.user.id}`,
+    RUN_RATE_MAX,
+    RUN_RATE_WINDOW_MS,
+  );
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: "Too many requests - try again in a minute." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSec) } },
+    );
+  }
 
   let body: unknown;
   try {

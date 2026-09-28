@@ -149,14 +149,24 @@ export default async function ProblemDetailPage({ params }: PageProps) {
             <h2 className="font-mono text-xs font-semibold uppercase tracking-wide text-accent">
               Hints
             </h2>
-            <HintsPanel hints={problem.hints} />
+            {/* Only the count ships to the client; hint text is fetched
+                on demand via the revealHint server action (spec 19.4). */}
+            <HintsPanel
+              problemSlug={problem.slug}
+              hintCount={problem.hints.length}
+            />
           </section>
 
           <section aria-label="Editorial" className="flex flex-col gap-2">
             <h2 className="font-mono text-xs font-semibold uppercase tracking-wide text-accent">
               Editorial
             </h2>
-            <EditorialReveal editorialMd={problem.editorialMd} />
+            {/* Only the flag ships to the client; the editorial is fetched
+                on demand via the revealEditorial server action (spec 19.4). */}
+            <EditorialReveal
+              problemSlug={problem.slug}
+              hasEditorial={problem.editorialMd.trim().length > 0}
+            />
           </section>
         </div>
 
