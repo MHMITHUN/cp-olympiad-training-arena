@@ -3,7 +3,6 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { DemoBanner } from "@/components/layout/DemoBanner";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -34,7 +33,6 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="flex min-h-screen flex-col">
-        <DemoBanner />
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />
